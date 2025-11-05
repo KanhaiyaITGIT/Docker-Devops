@@ -1,25 +1,49 @@
 pipeline {
     agent any
-    stages {
+    environment {
+        IMAGE_NAME = "kanhadocker5/dockerimg"
+        CONTAINER_NAME = "myapp"
+        PORT = "8084"
+    }
+    stages{
         stage('git checkout') {
             steps {
-                echo 'git clonning '
+                echo "git cloning..."
                 git url: "https://github.com/KanhaiyaITGIT/Docker-Devops.git", branch: "main"
+                echo "git cloned successfully"
             }
         }
-        stage('build docker image') {
+        stage('build image') {
             steps {
-                echo "building docker image"
-                sh "docker build -t dockerimg:latest ."
-                echo "docker image built successfully"
+                echo "building image"
+                sh "docker build -t ${IMAGE_NAME}:latest . "
+                echo "image built succesfully"
             }
         }
-        stage('docker container creating') {
+        stage('running container') {
             steps {
-                echo "docker container running"
-                sh "docker rm -f myweb || true"
-                sh "docker run -d --name myweb -p 8083:80 dockerimg:latest"
-                echo "docker container ran successfully"
+                echo "running container"
+                sh "docker rm -f ${CONTAINER_NAME} || true"
+                sh "docker run -d --name ${CONTAINER_NAME} -p ${PORT}:80 ${IMAGE_NAME}:latest"
+                echo "container is running"
+            }
+        }
+        stage('checking container health') {
+            steps {
+                echo 'checking container health'
+                sh "sleep 5"
+                sh "curl -f http://localhost:${PORT} || exit 1"
+            }
+        }
+        stage('docker image push') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'docker-cred', usernameVariable: 'USER', passwordVariable: 'PASS')]) {
+                    sh """
+                    docker login -u $USER -p $PASS
+                    docker tag ${IMAGE_NAME}:latest $USER/dockerimg:latest
+                    docker push $USER/dockerimg:latest
+                    """
+                }
             }
         }
     }
@@ -34,7 +58,7 @@ pipeline {
         failure {
             emailext (
                 subject: "docker ran failed",
-                body: "docker container failed..!!!",
+                body: "⚠️ Docker pipeline failed.\n\nCheck logs: ${env.BUILD_URL}",
                 to: "kanhaiyagupta991018@gmail.com"
             )
         }
