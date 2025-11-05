@@ -17,7 +17,8 @@ pipeline {
         stage('docker container creating') {
             steps {
                 echo "docker container running"
-                sh "docker run -d --name myapp -p 8083:80"
+                sh "docker rm -f myweb || true"
+                sh "docker run -d --name myweb -p 8083:80 dockerimg:latest"
                 echo "docker container ran successfully"
             }
         }
@@ -25,15 +26,15 @@ pipeline {
     post {
         success {
             emailext (
-                subject: "docker ran successfully"
-                body: "docker container is running fine..!!!"
+                subject: "docker ran successfully",
+                body: "docker container is running fine..!!!",
                 to: "kanhaiyagupta991018@gmail.com"
             )
         }
         failure {
             emailext (
-                subject: "docker ran failed"
-                body: "docker container failed..!!!"
+                subject: "docker ran failed",
+                body: "docker container failed..!!!",
                 to: "kanhaiyagupta991018@gmail.com"
             )
         }
