@@ -3,23 +3,39 @@ pipeline {
     stages {
         stage('git checkout') {
             steps {
-                echo "cloning repository..."
-                git url: 'https://github.com/KanhaiyaITGIT/Docker-Devops.git', branch: 'main'
-                echo "git repo cloned"
+                echo 'git clonning '
+                git url: "https://github.com/KanhaiyaITGIT/Docker-Devops.git", branch: "main"
             }
         }
-        stage('Build docker image') {
+        stage('build docker image') {
             steps {
-                echo "building image....!!"
-                sh 'docker build -t mywebapp:latest .'
-                echo "image built successfully"
+                echo "building docker image"
+                sh "docker build -t dockerimg:latest ."
+                echo "docker image built successfully"
             }
         }
-        stage('Run container') {
+        stage('docker container creating') {
             steps {
-                echo "running container...!!"
-                sh 'docker run -d --name myweb -p 8082:80 mywebapp:latest'
+                echo "docker container running"
+                sh "docker run -d --name myapp -p 8083:80"
+                echo "docker container ran successfully"
             }
+        }
+    }
+    post {
+        success {
+            emailext (
+                subject: "docker ran successfully"
+                body: "docker container is running fine..!!!"
+                to: "kanhaiyagupta991018@gmail.com"
+            )
+        }
+        failure {
+            emailext (
+                subject: "docker ran failed"
+                body: "docker container failed..!!!"
+                to: "kanhaiyagupta991018@gmail.com"
+            )
         }
     }
 }
